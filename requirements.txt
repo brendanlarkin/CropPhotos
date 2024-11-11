@@ -1,0 +1,7 @@
+Flask
+Pillow
+requests
+torch
+torchvision
+torchaudio
+rembg
