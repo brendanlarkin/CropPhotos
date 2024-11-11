@@ -18,6 +18,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 logging.basicConfig(level=logging.DEBUG)
 
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -28,7 +29,7 @@ def process_image():
     if 'image_file' in request.files:
         file = request.files['image_file']
         if file.filename == '':
-            app.logger.error('No selected image file.')
+            app.logger.error('No selcected image file.')
             return 'No selected image file', 400
 
         # Save the uploaded file
