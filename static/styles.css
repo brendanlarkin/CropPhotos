@@ -1,0 +1,111 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #eef2f5;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    margin-top: 30px;
+    color: #333;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 20px;
+}
+
+.upload-area,
+.result-area {
+    width: 450px;
+    min-height: 450px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 20px;
+    background-color: #fff;
+    position: relative;
+}
+
+.upload-area {
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+    caret-color: transparent;
+    overflow: hidden;
+}
+
+.upload-area.dragover {
+    border-color: #333;
+    background-color: #f0f0f0;
+}
+
+#upload-instructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.upload-area h2,
+.result-area h2 {
+    margin-top: 0;
+    color: #555;
+}
+
+#file-input {
+    display: none;
+}
+
+#file-input-button {
+    margin-top: 10px;
+    padding: 8px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#original-image,
+#result-image {
+    max-width: 100%;
+    max-height: 100%;
+    display: none;
+}
+
+#original-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#result-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+/* Add this at the end of styles.css */
+
+/* Spinner Styles */
+.spinner {
+    margin: 20px auto;
+    width: 60px;
+    height: 60px;
+    border: 6px solid #ccc;
+    border-top-color: #1d72b8;
+    border-radius: 50%;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media (min-width: 900px) {
+    .container {
+        flex-wrap: nowrap;
+    }
+}

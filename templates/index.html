@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Background Remover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Background Remover</h1>
+    <div class="container">
+        <div class="upload-area" id="upload-area" contenteditable="true">
+            <img id="original-image" alt="Original Image">
+            <div id="upload-instructions">
+                <h2>Paste or Drag & Drop Image Here</h2>
+                <p>or click the button to select a file</p>
+                <button id="file-input-button">Choose File</button>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+        </div>
+        <div class="result-area" id="result-area">
+            <h2>Processed Image</h2>
+            <img id="result-image" alt="Processed Image">
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
