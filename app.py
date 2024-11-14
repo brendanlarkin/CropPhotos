@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_file
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image
 import io
 import os
@@ -21,6 +21,9 @@ logging.basicConfig(level=logging.DEBUG)
 # Check if CUDA is available
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 app.logger.debug(f'Using device: {device}')
+
+# Initialize the session once, reuse for multiple requests
+session = new_session(model_name='isnet-general-use')  # Use desired model
 
 @app.route('/')
 def index():
@@ -61,15 +64,20 @@ def process_image():
             input_image = fetch_image_from_url(url)
         except Exception as e:
             app.logger.error(f'Failed to fetch image from URL: {e}')
-            return f'Failed to fetch image from URL: {e}', 400
+            return f'Failed to fetch image from URL: {e}', 500
     else:
         app.logger.error('No image data provided.')
         return 'No image data provided', 400
 
     # Process the image
     try:
-        output_image = process_image_background(input_image)
+        output_image = process_image_background(input_image, session)
         app.logger.debug('Image processing completed successfully.')
+
+        # Optional: Save output image for debugging
+        output_debug_path = os.path.join(app.config['UPLOAD_FOLDER'], 'output_debug.png')
+        output_image.save(output_debug_path, 'PNG')
+        app.logger.debug(f'Output image saved for debugging at {output_debug_path}')
     except Exception as e:
         app.logger.error(f'Failed to process image: {e}')
         return f'Failed to process image: {e}', 500
@@ -106,64 +114,31 @@ def fetch_image_from_url(url):
         app.logger.error(f'Error fetching image from URL: {e}')
         raise
 
-def process_image_background(input_image):
-    # Remove background using rembg with customized alpha matting
+def process_image_background(input_image, session):
+    # Remove background using rembg with the created session and customized alpha matting
     output_image = remove(
         input_image,
-        device=device,
-        alpha_matting=True,  # Enable alpha matting for smoother edges
-        alpha_matting_erode_size=0,  # Minimal erosion to reduce shadows
-        alpha_matting_foreground_threshold=240,  # Higher threshold for foreground
-        alpha_matting_background_threshold=10    # Lower threshold for background
+        session=session,
+        alpha_matting=True,
+        alpha_matting_erode_size=0,
+        alpha_matting_foreground_threshold=240,
+        alpha_matting_background_threshold=10
     )
 
     # Ensure alpha channel
     if output_image.mode != 'RGBA':
         output_image = output_image.convert('RGBA')
 
-    # Optional: Slightly increase opacity to reduce visible shadows
-    # Instead of setting alpha to 255, we'll increase it by a small amount
+    # Optionally, adjust alpha channel safely
     datas = output_image.getdata()
     newData = []
     for item in datas:
-        # Increase alpha value slightly, max 255
-        new_alpha = min(item[3] + 15, 255)
-        newData.append((item[0], item[1], item[2], new_alpha))
-    output_image.putdata(newData)
-
-    # Crop to non-transparent pixels
-    bbox = output_image.getbbox()
-    if bbox:
-        cropped_image = output_image.crop(bbox)
-        app.logger.debug('Image cropped to non-transparent pixels.')
-    else:
-        cropped_image = output_image
-        app.logger.debug('No cropping needed.')
-
-    return cropped_image
-    # Remove background using rembg with customized alpha matting
-    output_image = remove(
-        input_image,
-        device=device,
-        alpha_matting=True,  # Enable alpha matting for smoother edges
-        alpha_matting_erode_size=0,  # Minimal erosion to reduce shadows
-        alpha_matting_foreground_threshold=240,  # Higher threshold for foreground
-        alpha_matting_background_threshold=10    # Lower threshold for background
-    )
-
-    # Ensure alpha channel
-    if output_image.mode != 'RGBA':
-        output_image = output_image.convert('RGBA')
-
-    # Optional: Post-processing to enhance opacity and reduce shadows
-    datas = output_image.getdata()
-    newData = []
-    for item in datas:
-        # If the alpha is below a certain threshold, set it to fully opaque
-        if item[3] < 240:
-            newData.append((item[0], item[1], item[2], 255))
+        # Only modify alpha if the pixel is not fully transparent
+        if item[3] > 0:
+            new_alpha = min(item[3] + 15, 255)
+            newData.append((item[0], item[1], item[2], new_alpha))
         else:
-            newData.append(item)
+            newData.append(item)  # Keep fully transparent pixels unchanged
     output_image.putdata(newData)
 
     # Crop to non-transparent pixels
